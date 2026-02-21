@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DarkGPT</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="header-left">
+        <span class="logo">&#9889;</span>
+        <h1>DarkGPT</h1>
+      </div>
+      <div class="header-right">
+        <select id="model-select"></select>
+        <button id="btn-new-chat" title="New chat">+</button>
+        <button id="btn-settings" title="Settings">&#9881;</button>
+      </div>
+    </header>
+
+    <div id="setup-banner" style="display:none">
+      <p>API key not configured. <a href="#" id="link-settings">Open settings</a> to get started.</p>
+    </div>
+
+    <div id="messages"></div>
+
+    <div id="input-area">
+      <div id="context-bar" style="display:none">
+        <span id="context-label"></span>
+        <button id="btn-clear-context" title="Clear">&times;</button>
+      </div>
+      <div class="input-row">
+        <textarea id="user-input" placeholder="Ask anything..." rows="1"></textarea>
+        <button id="btn-send" title="Send">&#10148;</button>
+      </div>
+      <div class="input-actions">
+        <button id="btn-extract">&#128196; Page</button>
+        <button id="btn-select">&#128270; Select</button>
+        <button id="btn-screenshot">&#128247; Overview</button>
+      </div>
+    </div>
+  </div>
+  <script src="lib/marked.min.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

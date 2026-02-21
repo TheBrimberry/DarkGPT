@@ -1,0 +1,172 @@
+#darkgpt-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+#darkgpt-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6e40c9, #8957e5);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  box-shadow: 0 4px 16px rgba(110, 64, 201, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+  user-select: none;
+  font-size: 22px;
+}
+
+#darkgpt-fab:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 24px rgba(110, 64, 201, 0.6);
+}
+
+#darkgpt-fab:active {
+  cursor: grabbing;
+}
+
+#darkgpt-mini-panel {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 340px;
+  max-height: 400px;
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#darkgpt-mini-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  color: #e6edf3;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+#darkgpt-mini-header button {
+  background: none;
+  border: none;
+  color: #8b949e;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 4px;
+}
+
+#darkgpt-mini-header button:hover {
+  color: #e6edf3;
+}
+
+#darkgpt-mini-body {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 8px;
+}
+
+#darkgpt-mini-output {
+  min-height: 60px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  background: #161b22;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  color: #e6edf3;
+  font-size: 13px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+#darkgpt-mini-output:empty::before {
+  content: 'Ask a question or use the quick actions below.';
+  color: #8b949e;
+  font-style: italic;
+}
+
+#darkgpt-mini-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+#darkgpt-mini-input {
+  flex: 1;
+  padding: 8px 10px;
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 8px;
+  color: #e6edf3;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+#darkgpt-mini-input:focus {
+  border-color: #6e40c9;
+}
+
+#darkgpt-mini-input::placeholder {
+  color: #8b949e;
+}
+
+#darkgpt-mini-send {
+  background: #6e40c9;
+  border: none;
+  color: white;
+  border-radius: 8px;
+  width: 34px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+#darkgpt-mini-send:hover {
+  background: #8957e5;
+}
+
+#darkgpt-mini-actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+#darkgpt-mini-actions button {
+  background: #21262d;
+  border: 1px solid #30363d;
+  color: #8b949e;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#darkgpt-mini-actions button:hover {
+  color: #e6edf3;
+  border-color: #6e40c9;
+}
+
+/* Scrollbar */
+#darkgpt-mini-output::-webkit-scrollbar {
+  width: 4px;
+}
+
+#darkgpt-mini-output::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 2px;
+}
