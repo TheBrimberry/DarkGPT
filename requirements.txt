@@ -1,0 +1,10 @@
+# ── Core Server ─────────────────────────────────────────────────
+Flask>=3.0
+python-dotenv>=1.0
+requests>=2.31
+
+# ── AI / LLM ───────────────────────────────────────────────────
+openai>=1.12
+
+# ── Database (signal tracking uses built-in sqlite3) ───────────
+# No extra dependency needed - sqlite3 is in Python stdlib
