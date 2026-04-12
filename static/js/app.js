@@ -144,6 +144,7 @@ function initCharts() {
 async function updateCharts(stats) {
     // Doughnut – totals from stats
     if (statusChart) {
+        // 'received' is the pending/unprocessed status; anything that isn't executed or failed counts as pending
         const pending = Math.max(0, (stats.total_signals || 0) - (stats.executed || 0) - (stats.failed || 0));
         statusChart.data.datasets[0].data = [stats.executed || 0, stats.failed || 0, pending];
         statusChart.update('none');

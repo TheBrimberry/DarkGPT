@@ -197,7 +197,7 @@ class SignalManager:
             (modifier,),
         ).fetchall()
         conn.close()
-        days_map: dict = defaultdict(lambda: {"executed": 0, "failed": 0, "received": 0, "pnl": 0.0})
+        days_map: dict = defaultdict(lambda: {"executed": 0, "failed": 0, "pnl": 0.0})
         for row in rows:
             d = row["day"]
             days_map[d][row["status"]] = row["count"]
