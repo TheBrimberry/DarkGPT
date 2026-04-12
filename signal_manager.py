@@ -180,3 +180,33 @@ class SignalManager:
         ).fetchall()
         conn.close()
         return [dict(r) for r in rows]
+
+    # ── Chart Data ───────────────────────────────────────────────────
+
+    def get_chart_data(self, days: int = 14) -> dict:
+        from collections import defaultdict
+        modifier = f"-{days} days"
+        conn = get_db()
+        rows = conn.execute(
+            """SELECT date(timestamp) as day, status,
+                      COUNT(*) as count, COALESCE(SUM(pnl), 0) as day_pnl
+               FROM signals
+               WHERE date(timestamp) >= date('now', ?)
+               GROUP BY day, status
+               ORDER BY day ASC""",
+            (modifier,),
+        ).fetchall()
+        conn.close()
+        days_map: dict = defaultdict(lambda: {"executed": 0, "failed": 0, "received": 0, "pnl": 0.0})
+        for row in rows:
+            d = row["day"]
+            days_map[d][row["status"]] = row["count"]
+            if row["status"] == "executed":
+                days_map[d]["pnl"] += row["day_pnl"]
+        sorted_days = sorted(days_map.keys())
+        return {
+            "labels": sorted_days,
+            "executed": [days_map[d]["executed"] for d in sorted_days],
+            "failed": [days_map[d]["failed"] for d in sorted_days],
+            "pnl": [round(days_map[d]["pnl"], 4) for d in sorted_days],
+        }
