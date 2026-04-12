@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DarkGPT - TradingView to Phemex Webhook Trader</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h1 class="logo">DarkGPT</h1>
+            <span class="logo-sub">Webhook Trader</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" class="nav-link active" data-tab="dashboard">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                Dashboard</a></li>
+            <li><a href="#" class="nav-link" data-tab="webhook">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                Webhook Setup</a></li>
+            <li><a href="#" class="nav-link" data-tab="converter">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                Code Converter</a></li>
+            <li><a href="#" class="nav-link" data-tab="chat">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                AI Chat</a></li>
+            <li><a href="#" class="nav-link" data-tab="settings">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Settings</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot offline"></span>
+                <span class="status-text">Disconnected</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="content">
+        <!-- Dashboard Tab -->
+        <section class="tab-content active" id="tab-dashboard">
+            <div class="page-header">
+                <h2>Dashboard</h2>
+                <button class="btn btn-sm" onclick="refreshDashboard()">Refresh</button>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Signals</div>
+                    <div class="stat-value" id="statTotal">0</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-label">Executed</div>
+                    <div class="stat-value" id="statExecuted">0</div>
+                </div>
+                <div class="stat-card danger">
+                    <div class="stat-label">Failed</div>
+                    <div class="stat-value" id="statFailed">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total P&L</div>
+                    <div class="stat-value" id="statPnl">$0.00</div>
+                </div>
+            </div>
+
+            <!-- Balance & Positions -->
+            <div class="card" id="balanceCard" style="display:none;">
+                <div class="card-header">
+                    <h3>Account Balance</h3>
+                </div>
+                <div class="card-body">
+                    <div class="balance-grid" id="balanceGrid"></div>
+                </div>
+            </div>
+
+            <div class="card" id="positionsCard" style="display:none;">
+                <div class="card-header">
+                    <h3>Open Positions</h3>
+                </div>
+                <div class="card-body">
+                    <div id="positionsList"></div>
+                </div>
+            </div>
+
+            <!-- Signal Log -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Signal Log</h3>
+                    <button class="btn btn-sm btn-danger" onclick="clearSignals()">Clear All</button>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table class="data-table" id="signalTable">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Symbol</th>
+                                    <th>Action</th>
+                                    <th>Type</th>
+                                    <th>Qty</th>
+                                    <th>Price</th>
+                                    <th>SL</th>
+                                    <th>TP</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="signalTableBody">
+                                <tr><td colspan="9" class="empty-state">No signals yet. Configure your webhook to get started.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Webhook Setup Tab -->
+        <section class="tab-content" id="tab-webhook">
+            <div class="page-header">
+                <h2>Webhook Setup</h2>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3>Your Webhook URL</h3></div>
+                <div class="card-body">
+                    <p class="text-muted">Use this URL as the webhook URL in your TradingView alert.</p>
+                    <div class="copy-box">
+                        <code id="webhookUrl">Loading...</code>
+                        <button class="btn btn-sm" onclick="copyWebhookUrl()">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3>Alert Message Template</h3></div>
+                <div class="card-body">
+                    <p class="text-muted">Paste this JSON into your TradingView alert message box. Customize the values as needed.</p>
+                    <div class="code-block-wrapper">
+                        <pre class="code-block" id="alertTemplate">Loading...</pre>
+                        <button class="btn btn-sm copy-btn" onclick="copyAlertTemplate()">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3>Step-by-Step Guide</h3></div>
+                <div class="card-body">
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-num">1</div>
+                            <div class="step-content">
+                                <strong>Configure Settings</strong>
+                                <p>Go to the Settings tab and add your Phemex API key and secret. Enable testnet first to practice safely.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">2</div>
+                            <div class="step-content">
+                                <strong>Expose Your Server</strong>
+                                <p>Use a service like ngrok to expose your local server: <code>ngrok http 5000</code>. Copy the HTTPS URL.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">3</div>
+                            <div class="step-content">
+                                <strong>Create TradingView Alert</strong>
+                                <p>Open your chart, click "Add Alert", set your condition. In the "Webhook URL" field, paste <code>your-ngrok-url/webhook</code>.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">4</div>
+                            <div class="step-content">
+                                <strong>Set Alert Message</strong>
+                                <p>In the alert's "Message" field, paste the JSON template above. Use TradingView placeholders like <code>{% raw %}{{close}}{% endraw %}</code>, <code>{% raw %}{{ticker}}{% endraw %}</code>, <code>{% raw %}{{strategy.order.contracts}}{% endraw %}</code>.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-num">5</div>
+                            <div class="step-content">
+                                <strong>Test It</strong>
+                                <p>Click "Test Connection" in Settings to verify Phemex connectivity. Then trigger your alert and watch the Dashboard for results.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Signal Test -->
+            <div class="card">
+                <div class="card-header"><h3>Send Test Signal</h3></div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Action</label>
+                            <select id="testAction">
+                                <option value="buy">Buy / Long</option>
+                                <option value="sell">Sell / Short</option>
+                                <option value="close">Close Position</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Symbol</label>
+                            <input type="text" id="testSymbol" value="BTCUSDT" placeholder="BTCUSDT">
+                        </div>
+                        <div class="form-group">
+                            <label>Qty</label>
+                            <input type="number" id="testQty" value="0.001" step="0.001">
+                        </div>
+                        <div class="form-group">
+                            <label>Type</label>
+                            <select id="testType">
+                                <option value="market">Market</option>
+                                <option value="limit">Limit</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Price (limit only)</label>
+                            <input type="number" id="testPrice" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label>Leverage</label>
+                            <input type="number" id="testLeverage" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label>Stop Loss</label>
+                            <input type="number" id="testSl" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label>Take Profit</label>
+                            <input type="number" id="testTp" placeholder="Optional">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="sendTestSignal()">Send Test Signal</button>
+                    <div id="testResult" class="result-box" style="display:none;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Code Converter Tab -->
+        <section class="tab-content" id="tab-converter">
+            <div class="page-header">
+                <h2>Code-to-PineScript Converter</h2>
+                <p class="text-muted">Paste any trading strategy code (Python, JS, MQL, C#, pseudocode, or plain English) and convert it to a TradingView PineScript v5 strategy with webhook alerts.</p>
+            </div>
+
+            <div class="converter-layout">
+                <div class="converter-panel">
+                    <div class="panel-header">
+                        <h3>Input Code</h3>
+                        <select id="inputLanguage">
+                            <option value="auto">Auto-Detect</option>
+                            <option value="python">Python</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="mql4">MQL4</option>
+                            <option value="mql5">MQL5</option>
+                            <option value="csharp">C#</option>
+                            <option value="java">Java</option>
+                            <option value="pseudocode">Pseudocode</option>
+                            <option value="english">Plain English</option>
+                        </select>
+                    </div>
+                    <textarea class="code-editor" id="inputCode" placeholder="Paste your trading strategy code here...
+
+Examples:
+- Python with ta-lib indicators
+- MQL4/5 Expert Advisors
+- JavaScript trading bots
+- Plain English: 'Buy when RSI crosses above 30 and MACD is bullish, sell when RSI crosses below 70'
+- Any algorithmic trading logic"></textarea>
+                </div>
+
+                <div class="converter-actions">
+                    <button class="btn btn-primary btn-lg" id="convertBtn" onclick="convertCode()">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                        Convert
+                    </button>
+                </div>
+
+                <div class="converter-panel">
+                    <div class="panel-header">
+                        <h3>PineScript v5 Output</h3>
+                        <button class="btn btn-sm" onclick="copyPinescript()">Copy</button>
+                    </div>
+                    <textarea class="code-editor output" id="outputCode" readonly placeholder="Converted PineScript v5 code will appear here..."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Chat Tab -->
+        <section class="tab-content" id="tab-chat">
+            <div class="page-header">
+                <h2>AI Trading Assistant</h2>
+                <button class="btn btn-sm btn-danger" onclick="clearChat()">Clear Chat</button>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message assistant">
+                        <div class="message-content">
+                            <p>Hello! I'm your AI trading assistant. I can help you with:</p>
+                            <ul>
+                                <li><strong>Trading Strategies</strong> - Develop and optimize strategies</li>
+                                <li><strong>PineScript</strong> - Write, debug, and explain PineScript code</li>
+                                <li><strong>Webhook Setup</strong> - Configure TradingView alerts</li>
+                                <li><strong>Phemex Trading</strong> - Exchange-specific questions</li>
+                                <li><strong>Risk Management</strong> - Position sizing, SL/TP, leverage</li>
+                            </ul>
+                            <p>What would you like to work on?</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <textarea class="chat-input" id="chatInput" placeholder="Ask about trading strategies, PineScript, webhooks, risk management..." rows="2"></textarea>
+                    <button class="btn btn-primary chat-send" id="chatSendBtn" onclick="sendChat()">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Tab -->
+        <section class="tab-content" id="tab-settings">
+            <div class="page-header">
+                <h2>Settings</h2>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3>Phemex API</h3></div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>API Key</label>
+                            <input type="text" id="settPhemexKey" placeholder="Your Phemex API key">
+                        </div>
+                        <div class="form-group full">
+                            <label>API Secret</label>
+                            <input type="password" id="settPhemexSecret" placeholder="Your Phemex API secret">
+                        </div>
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="settTestnet" checked>
+                                <span>Use Testnet (recommended for testing)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="testConnection()">Test Connection</button>
+                    <span id="connectionResult" class="ml-2"></span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3>Trading Defaults</h3></div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Default Symbol</label>
+                            <input type="text" id="settSymbol" value="BTCUSDT">
+                        </div>
+                        <div class="form-group">
+                            <label>Default Quantity</label>
+                            <input type="number" id="settQty" value="0.001" step="0.001">
+                        </div>
+                        <div class="form-group">
+                            <label>Default Leverage</label>
+                            <input type="number" id="settLeverage" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label>Webhook Secret (optional)</label>
+                            <input type="text" id="settWebhookSecret" placeholder="Auth token for webhook">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3>AI / LLM Provider</h3></div>
+                <div class="card-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Provider</label>
+                            <select id="settLlmProvider">
+                                <option value="openai">OpenAI</option>
+                                <option value="groq">Groq (Free)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Model</label>
+                            <input type="text" id="settModel" value="gpt-4o" placeholder="gpt-4o, llama-3.3-70b-versatile, etc.">
+                        </div>
+                        <div class="form-group full">
+                            <label>OpenAI API Key</label>
+                            <input type="password" id="settOpenaiKey" placeholder="sk-...">
+                        </div>
+                        <div class="form-group full">
+                            <label>Groq API Key</label>
+                            <input type="password" id="settGroqKey" placeholder="gsk_...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-actions">
+                <button class="btn btn-primary btn-lg" onclick="saveSettings()">Save All Settings</button>
+                <span id="saveResult" class="ml-2"></span>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

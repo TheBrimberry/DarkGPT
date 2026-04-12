@@ -35,3 +35,7 @@ dist/
 *.egg
 *.egg-info
 build
+
+# Trading webhook runtime data
+signals.db
+settings.json
