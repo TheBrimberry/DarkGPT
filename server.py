@@ -402,6 +402,12 @@ def clear_chat():
     return jsonify({"status": "cleared"})
 
 
+@app.route("/api/signals/chart", methods=["GET"])
+def signals_chart():
+    days = request.args.get("days", 14, type=int)
+    return jsonify(signals.get_chart_data(days))
+
+
 # ── Webhook URL Helper ──────────────────────────────────────────────
 
 @app.route("/api/webhook-info", methods=["GET"])

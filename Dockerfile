@@ -1,20 +1,15 @@
-# Use the official Node.js image as a base
-FROM node:14
+FROM python:3.11-slim
 
-# Set the working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY frontend/package*.json ./
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application code
 COPY . .
 
-# Expose the port the app runs on
-EXPOSE 3000
+EXPOSE 5000
 
-# Command to run the application
-CMD ["npm", "run", "dev"]
+ENV FLASK_DEBUG=false
+ENV PORT=5000
+
+CMD ["python", "server.py"]

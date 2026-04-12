@@ -10,14 +10,167 @@ document.querySelectorAll('.nav-link').forEach(link => {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.getElementById(`tab-${tab}`).classList.add('active');
 
+        // Close sidebar on mobile when a link is clicked
+        closeSidebar();
+
         if (tab === 'dashboard') refreshDashboard();
         if (tab === 'webhook') loadWebhookInfo();
         if (tab === 'settings') loadSettings();
     });
 });
 
+/* ── Sidebar toggle (mobile) ───────────────────────────────────── */
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const isOpen = sidebar.classList.toggle('open');
+    overlay.classList.toggle('open', isOpen);
+}
+
+function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+/* ── Auto-refresh ──────────────────────────────────────────────── */
+let refreshTimer = null;
+let refreshCountdownValue = 30;
+
+function startAutoRefresh() {
+    if (refreshTimer) clearInterval(refreshTimer);
+    refreshCountdownValue = 30;
+    updateCountdownDisplay();
+    refreshTimer = setInterval(() => {
+        refreshCountdownValue--;
+        if (refreshCountdownValue <= 0) {
+            refreshCountdownValue = 30;
+            refreshDashboard();
+        }
+        updateCountdownDisplay();
+    }, 1000);
+}
+
+function updateCountdownDisplay() {
+    const el = document.getElementById('refreshCountdown');
+    if (el) el.textContent = refreshCountdownValue;
+}
+
+/* ── Charts ────────────────────────────────────────────────────── */
+let activityChart = null;
+let statusChart = null;
+
+function initCharts() {
+    const chartDefaults = {
+        color: '#94a3b8',
+        borderColor: 'rgba(42,53,80,0.7)',
+    };
+
+    // Bar chart – daily signal activity
+    const actCtx = document.getElementById('activityChart').getContext('2d');
+    activityChart = new Chart(actCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Executed',
+                    data: [],
+                    backgroundColor: 'rgba(16,185,129,0.75)',
+                    borderColor: 'rgba(16,185,129,1)',
+                    borderWidth: 1,
+                },
+                {
+                    label: 'Failed',
+                    data: [],
+                    backgroundColor: 'rgba(239,68,68,0.75)',
+                    borderColor: 'rgba(239,68,68,1)',
+                    borderWidth: 1,
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            scales: {
+                x: {
+                    stacked: true,
+                    grid: { color: 'rgba(42,53,80,0.5)' },
+                    ticks: { color: '#94a3b8', font: { size: 11 } },
+                },
+                y: {
+                    stacked: true,
+                    beginAtZero: true,
+                    grid: { color: 'rgba(42,53,80,0.5)' },
+                    ticks: { color: '#94a3b8', font: { size: 11 }, stepSize: 1 },
+                },
+            },
+            plugins: {
+                legend: { labels: { color: '#94a3b8', font: { size: 12 }, boxWidth: 14 } },
+            },
+        },
+    });
+
+    // Doughnut chart – status breakdown
+    const statCtx = document.getElementById('statusChart').getContext('2d');
+    statusChart = new Chart(statCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Executed', 'Failed', 'Pending'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: [
+                    'rgba(16,185,129,0.85)',
+                    'rgba(239,68,68,0.85)',
+                    'rgba(59,130,246,0.85)',
+                ],
+                borderColor: '#0a0e17',
+                borderWidth: 2,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#94a3b8', font: { size: 12 }, boxWidth: 14, padding: 16 },
+                },
+            },
+        },
+    });
+}
+
+async function updateCharts(stats) {
+    // Doughnut – totals from stats
+    if (statusChart) {
+        // 'received' is the pending/unprocessed status; anything that isn't executed or failed counts as pending
+        const pending = Math.max(0, (stats.total_signals || 0) - (stats.executed || 0) - (stats.failed || 0));
+        statusChart.data.datasets[0].data = [stats.executed || 0, stats.failed || 0, pending];
+        statusChart.update('none');
+    }
+
+    // Bar chart – daily breakdown from /api/signals/chart
+    try {
+        const res = await fetch('/api/signals/chart');
+        const data = await res.json();
+        if (activityChart && data.labels) {
+            activityChart.data.labels = data.labels;
+            activityChart.data.datasets[0].data = data.executed;
+            activityChart.data.datasets[1].data = data.failed;
+            activityChart.update('none');
+        }
+    } catch (err) {
+        console.error('Chart update error:', err);
+    }
+}
+
 /* ── Dashboard ─────────────────────────────────────────────────── */
 async function refreshDashboard() {
+    // Reset auto-refresh countdown
+    refreshCountdownValue = 30;
+    updateCountdownDisplay();
+
     try {
         const [sigRes, posRes] = await Promise.all([
             fetch('/api/signals').then(r => r.json()),
@@ -86,6 +239,9 @@ async function refreshDashboard() {
                 </tr>`;
             }).join('');
         }
+
+        // Update charts
+        await updateCharts(stats);
     } catch (err) {
         console.error('Dashboard refresh error:', err);
     }
@@ -424,6 +580,8 @@ chatInput.addEventListener('input', () => {
 
 /* ── Init ──────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
+    initCharts();
     refreshDashboard();
     loadWebhookInfo();
+    startAutoRefresh();
 });
