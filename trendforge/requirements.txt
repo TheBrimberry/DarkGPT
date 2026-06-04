@@ -1,0 +1,14 @@
+# ── TrendForge ──────────────────────────────────────────────────
+# Core web app (required)
+Flask>=3.0
+python-dotenv>=1.0
+requests>=2.31
+
+# ── Optional providers (only needed to go beyond smart mocks) ───
+# Uncomment what you wire up via .env keys.
+# openai>=1.12          # LLM scripts/analysis (OpenAI or Groq, both OpenAI-compatible)
+# replicate>=0.25       # text/image-to-video rendering
+# elevenlabs>=1.0       # realistic AI voiceover
+#
+# The trend feed (LunarCrush), music (Suno) and scraping use plain HTTP
+# via `requests`, so no extra SDKs are required for them.

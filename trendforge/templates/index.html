@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrendForge — AI Trend Intelligence & Ultimate Video Generator</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="bg-orbs"><span></span><span></span><span></span></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">◣◢</span>
+      <div>
+        <h1>TrendForge</h1>
+        <p>AI Trend Intelligence · Ultimate Video Generator</p>
+      </div>
+    </div>
+    <div class="provider-pills" id="provider-pills"></div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="trends">🔥 Trends</button>
+    <button class="tab" data-tab="forecast">🔮 Forecast</button>
+    <button class="tab" data-tab="studio">🎬 Video Studio</button>
+    <button class="tab" data-tab="gallery">🖼️ My Videos</button>
+  </nav>
+
+  <main>
+    <!-- ── TRENDS ─────────────────────────────────────────────── -->
+    <section class="panel active" id="tab-trends">
+      <div class="panel-head">
+        <h2>What's trending right now</h2>
+        <div class="controls">
+          <select id="trend-category"></select>
+          <button class="btn ghost" id="trend-refresh">Refresh</button>
+        </div>
+      </div>
+      <div class="summary-strip" id="trend-summary"></div>
+      <div class="grid cards" id="trend-grid"></div>
+    </section>
+
+    <!-- ── FORECAST ───────────────────────────────────────────── -->
+    <section class="panel" id="tab-forecast">
+      <div class="panel-head">
+        <h2>What's likely to trend next</h2>
+        <div class="controls">
+          <select id="forecast-category"></select>
+          <select id="forecast-weeks">
+            <option value="1">1 week out</option>
+            <option value="2">2 weeks out</option>
+            <option value="4" selected>4 weeks out</option>
+          </select>
+          <button class="btn ghost" id="forecast-refresh">Predict</button>
+        </div>
+      </div>
+      <p class="hint" id="forecast-method"></p>
+      <div class="grid" id="forecast-grid"></div>
+    </section>
+
+    <!-- ── STUDIO ─────────────────────────────────────────────── -->
+    <section class="panel" id="tab-studio">
+      <div class="mode-switch" id="mode-switch">
+        <button class="mode active" data-mode="prompt">✍️ Prompt → Video</button>
+        <button class="mode" data-mode="remake">♻️ Remake a Link</button>
+        <button class="mode" data-mode="article">📰 Article → Video</button>
+        <button class="mode" data-mode="music">🎵 Music Video / Song</button>
+        <button class="mode" data-mode="educational">🎓 Educational</button>
+      </div>
+
+      <div class="studio-layout">
+        <form class="studio-form glass" id="studio-form">
+          <div class="field" data-for="prompt remake article music educational">
+            <label id="main-input-label">Describe your video in a few words</label>
+            <textarea id="main-input" rows="3" placeholder="e.g. why everyone is obsessed with matcha"></textarea>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Aspect</label>
+              <select id="f-aspect">
+                <option value="9:16">9:16 · TikTok/Reels/Shorts</option>
+                <option value="16:9">16:9 · YouTube</option>
+                <option value="1:1">1:1 · Feed</option>
+                <option value="4:5">4:5 · IG portrait</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Platform</label>
+              <select id="f-platform">
+                <option>TikTok</option><option>Reels</option><option>Shorts</option>
+                <option>YouTube</option><option>X</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Length: <b id="len-val">24</b>s</label>
+              <input type="range" id="f-length" min="8" max="180" value="24" />
+            </div>
+            <div class="field">
+              <label>Visual style</label>
+              <select id="f-style">
+                <option value="vibrant">Vibrant</option>
+                <option value="cinematic">Cinematic</option>
+                <option value="clean">Clean</option>
+                <option value="neon">Neon</option>
+                <option value="documentary">Documentary</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Voiceover</label>
+              <select id="f-voice"></select>
+            </div>
+            <div class="field" data-for="music">
+              <label>Genre</label>
+              <select id="f-genre">
+                <option value="auto">Auto</option><option>pop</option><option>hip-hop</option>
+                <option>lo-fi</option><option>afrobeats</option><option>synthwave</option>
+                <option>trap</option><option>edm</option><option>r&b</option>
+              </select>
+            </div>
+            <div class="field" data-for="educational">
+              <label>Level</label>
+              <select id="f-level"><option>beginner</option><option>intermediate</option><option>advanced</option></select>
+            </div>
+          </div>
+
+          <button class="btn primary big" id="generate-btn" type="submit">⚡ Generate Trendable Video</button>
+          <p class="hint">No API keys needed — runs on smart mocks. Add keys in <code>.env</code> for full renders.</p>
+        </form>
+
+        <div class="studio-result" id="studio-result">
+          <div class="empty-state">
+            <div class="big-emoji">🎬</div>
+            <p>Your generated video project will appear here — storyboard, voiceover, music, captions, hashtags and a live trend score.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── GALLERY ────────────────────────────────────────────── -->
+    <section class="panel" id="tab-gallery">
+      <div class="panel-head">
+        <h2>My Videos</h2>
+        <div class="controls"><button class="btn ghost" id="gallery-refresh">Refresh</button></div>
+      </div>
+      <div class="grid cards" id="gallery-grid"></div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast"></div>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
