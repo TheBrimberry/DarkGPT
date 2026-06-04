@@ -12,6 +12,7 @@ from ..services.scoring import score_content
 from ..services.trend_intelligence import TrendIntelligence
 from ..services.trend_forecast import TrendForecast
 from ..services.video_studio import VideoStudio
+from ..services.publisher import Publisher
 
 api = Blueprint("api", __name__)
 
@@ -19,6 +20,7 @@ _store = ProjectStore()
 _intel = TrendIntelligence()
 _forecast = TrendForecast()
 _studio = VideoStudio(store=_store)
+_publisher = Publisher(store=_store)
 _voice = VoiceProvider()
 
 
@@ -36,7 +38,9 @@ def status():
         "categories": CATEGORIES,
         "aspects": list(ASPECTS.keys()),
         "voices": _voice.voices(),
+        "platforms": _publisher.platforms(),
         "stats": _store.stats(),
+        "post_stats": _store.post_stats(),
     })
 
 
@@ -167,3 +171,26 @@ def project(pid):
 @api.delete("/projects/<pid>")
 def delete_project(pid):
     return jsonify({"deleted": _store.delete(pid)})
+
+
+# ── auto-posting / distribution ───────────────────────────────────────────
+@api.post("/projects/<pid>/post")
+def publish_project(pid):
+    b = _body()
+    platforms = b.get("platforms") or []
+    out = _publisher.publish(
+        project_id=pid,
+        platforms=platforms,
+        caption=b.get("caption", ""),
+        when=b.get("when", "now"),
+        base_url=request.host_url.rstrip("/"),
+    )
+    if out.get("error"):
+        return jsonify(out), 404
+    return jsonify(out)
+
+
+@api.get("/posts")
+def posts():
+    project_id = request.args.get("project", "")
+    return jsonify(_publisher.history(project_id=project_id, limit=int(request.args.get("limit", 100))))

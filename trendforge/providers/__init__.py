@@ -5,6 +5,7 @@ from .video import VideoProvider
 from .music import MusicProvider
 from .tts import VoiceProvider
 from .scraper import ScraperProvider
+from .autopost import AutoPostProvider
 
 __all__ = [
     "LLMProvider",
@@ -13,4 +14,5 @@ __all__ = [
     "MusicProvider",
     "VoiceProvider",
     "ScraperProvider",
+    "AutoPostProvider",
 ]

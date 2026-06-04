@@ -156,6 +156,40 @@
     </section>
   </main>
 
+  <!-- ── Post / Schedule modal ──────────────────────────────── -->
+  <div class="modal-backdrop" id="post-modal">
+    <div class="modal glass">
+      <div class="modal-head">
+        <h3>🚀 Post / Schedule</h3>
+        <button class="modal-close" id="post-close">✕</button>
+      </div>
+      <p class="hint" id="post-project-name"></p>
+
+      <div class="field">
+        <label>Platforms</label>
+        <div class="platform-grid" id="post-platforms"></div>
+      </div>
+
+      <div class="field">
+        <label>When</label>
+        <div class="seg" id="post-when">
+          <button type="button" class="seg-btn active" data-when="now">Post now</button>
+          <button type="button" class="seg-btn" data-when="best">Best time ⭐</button>
+          <button type="button" class="seg-btn" data-when="custom">Schedule…</button>
+        </div>
+        <input type="datetime-local" id="post-datetime" style="display:none;margin-top:8px" />
+      </div>
+
+      <div class="field">
+        <label>Caption <span class="hint" style="display:inline">(auto-filled, editable)</span></label>
+        <textarea id="post-caption" rows="4"></textarea>
+      </div>
+
+      <button class="btn primary big" id="post-submit">🚀 Publish</button>
+      <div id="post-result"></div>
+    </div>
+  </div>
+
   <div class="toast" id="toast"></div>
   <script src="/static/js/app.js"></script>
 </body>

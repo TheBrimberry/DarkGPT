@@ -24,6 +24,7 @@ async function boot() {
   loadTrends();
   wireTabs();
   wireStudio();
+  wirePostModal();
   $('#f-length').addEventListener('input', e => $('#len-val').textContent = e.target.value);
 }
 
@@ -224,7 +225,8 @@ function renderProject(project, mount) {
         <h3 style="margin:10px 0 4px">${esc(project.title)}</h3>
         ${pkg.caption ? `<p class="hint">${esc(pkg.caption)}</p>` : ''}
         <div class="card-actions">
-          <button class="btn primary" onclick="regenerate('${esc(project.prompt || project.title)}')">🔄 Remix again</button>
+          <button class="btn primary" onclick="openPost('${project.id}')">🚀 Post / Schedule</button>
+          <button class="btn ghost" onclick="regenerate('${esc(project.prompt || project.title)}')">🔄 Remix</button>
           <button class="btn ghost" onclick="copyScript(this)" data-script="${esc(board.script || '')}">📋 Copy script</button>
         </div>
       </div>
@@ -316,6 +318,7 @@ async function loadGallery() {
   $$('#gallery-grid .del').forEach(b => b.addEventListener('click', async () => {
     await api('/projects/' + b.dataset.id, { method: 'DELETE' }); toast('Deleted'); loadGallery();
   }));
+  $$('#gallery-grid .post').forEach(b => b.addEventListener('click', () => openPost(b.dataset.id)));
 }
 
 function galleryCard(p) {
@@ -326,10 +329,75 @@ function galleryCard(p) {
     <div class="meta"><span class="tagchip">${esc(p.kind)}</span><span class="badge first">${p.trend_score}</span></div>
     <div class="card-actions">
       <button class="btn primary open" data-id="${p.id}">Open</button>
+      <button class="btn ghost post" data-id="${p.id}" title="Post / Schedule">🚀</button>
       <button class="btn ghost del" data-id="${p.id}">🗑️</button>
     </div>
   </div>`;
 }
+
+/* ── post / schedule modal ────────────────────────────── */
+let POST_PID = null;
+let POST_WHEN = 'now';
+
+function wirePostModal() {
+  $('#post-close').addEventListener('click', closePost);
+  $('#post-modal').addEventListener('click', e => { if (e.target.id === 'post-modal') closePost(); });
+  $$('#post-when .seg-btn').forEach(b => b.addEventListener('click', () => {
+    $$('#post-when .seg-btn').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); POST_WHEN = b.dataset.when;
+    $('#post-datetime').style.display = POST_WHEN === 'custom' ? 'block' : 'none';
+  }));
+  $('#post-submit').addEventListener('click', submitPost);
+}
+
+async function openPost(pid) {
+  POST_PID = pid; POST_WHEN = 'now';
+  const project = await api('/projects/' + pid);
+  $('#post-project-name').textContent = '🎬 ' + (project.title || pid);
+  // platforms — preselect the project's target platform
+  const target = (project.spec || {}).platform;
+  $('#post-platforms').innerHTML = STATUS.platforms.map(p => `
+    <div class="pchip ${p === target ? 'on' : ''}" data-p="${p}"><span class="dot"></span>${p}</div>`).join('');
+  $$('#post-platforms .pchip').forEach(c => c.addEventListener('click', () => c.classList.toggle('on')));
+  // caption preview (caption + hashtags)
+  const pkg = (project.spec || {}).publish || ((project.spec || {}).storyboard || {}).package || {};
+  const cap = [pkg.caption || project.title, (pkg.hashtags || []).join(' ')].filter(Boolean).join('\n\n');
+  $('#post-caption').value = cap;
+  $$('#post-when .seg-btn').forEach((x, i) => x.classList.toggle('active', i === 0));
+  $('#post-datetime').style.display = 'none';
+  $('#post-result').innerHTML = '';
+  $('#post-submit').disabled = false; $('#post-submit').textContent = '🚀 Publish';
+  $('#post-modal').classList.add('show');
+}
+function closePost() { $('#post-modal').classList.remove('show'); }
+
+async function submitPost() {
+  const platforms = $$('#post-platforms .pchip.on').map(c => c.dataset.p);
+  if (!platforms.length) { toast('Pick at least one platform'); return; }
+  let when = POST_WHEN;
+  if (POST_WHEN === 'custom') {
+    const dt = $('#post-datetime').value;
+    if (!dt) { toast('Pick a date & time'); return; }
+    when = new Date(dt).toISOString();
+  }
+  const btn = $('#post-submit'); btn.disabled = true; btn.textContent = 'Publishing…';
+  const out = await api(`/projects/${POST_PID}/post`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ platforms, when, caption: $('#post-caption').value }),
+  });
+  if (out.error) { $('#post-result').innerHTML = `<p class="hint">⚠️ ${esc(out.error)}</p>`; btn.disabled = false; return; }
+  const res = out.result || {};
+  const lines = (Array.isArray(res.results) ? res.results : platforms.map(p => ({ platform: p, status: res.status }))).map(r => `
+    <div class="post-line"><span>${esc(r.platform)}</span>
+      <span class="${out.scheduled ? 'sch' : 'ok'}">${out.scheduled ? '🕒 scheduled' : '✓ ' + (r.status || 'published')}</span>
+      ${r.permalink ? `<a href="${r.permalink}" target="_blank">view ↗</a>` : ''}</div>`).join('');
+  $('#post-result').innerHTML = `<div class="post-results">${lines}</div>
+    ${out.scheduled ? `<p class="hint">📅 Scheduled for ${esc(res.schedule_time || when)}</p>` : ''}
+    ${out.mock ? `<p class="hint">⚠️ Mock publish — add AYRSHARE_API_KEY in .env to post for real.</p>` : ''}`;
+  btn.textContent = out.scheduled ? '✓ Scheduled' : '✓ Published';
+  toast(out.scheduled ? 'Scheduled ✓' : 'Posted ✓');
+}
+window.openPost = openPost;
 
 /* ── helpers ──────────────────────────────────────────── */
 function switchTab(name) {

@@ -25,6 +25,7 @@ an explainable **trend score**.
 | 🎵 **Music Video / Song** | a topic | a structured song (genre, BPM, key, lyrics) + synced music‑video storyboard |
 | 🎓 **Educational** | a topic | a structured lesson / instructional video with an outline |
 | 📊 **Trend Score** | any hook/caption/length | an explainable 0–100 virality score with concrete fixes |
+| 🚀 **Auto-post** | a saved project + platforms | publishes or schedules to TikTok/Reels/Shorts/YouTube/X/etc. with post history |
 | 🖼️ **My Videos** | — | a saved gallery of every project (SQLite), re‑openable & remixable |
 
 Best-in-class features borrowed from tools like CapCut, InVideo, Opus, Pika,
@@ -62,6 +63,7 @@ The header pills show which capabilities are **live** vs **mock** in real time.
 | Video render | Replicate / Runway / Pika | `REPLICATE_API_TOKEN` … | render plan + generated SVG poster |
 | Music / song | Suno | `SUNO_API_KEY` | full song spec + structured lyrics |
 | Voiceover | ElevenLabs | `ELEVENLABS_API_KEY` | timed voiceover plan |
+| Auto-post / distribution | Ayrshare | `AYRSHARE_API_KEY` | simulated multi-platform publish + schedule |
 | Link/article scrape | live HTTP fetch | (none) | structured content mock |
 
 If a key is missing **or** a live call fails, the provider degrades to its mock
@@ -105,6 +107,8 @@ trendforge/
 | `POST` | `/api/educational` | lesson video (`{topic, level, ...}`) |
 | `POST` | `/api/score` | score any content for virality |
 | `GET/DELETE` | `/api/projects[/<id>]` | gallery CRUD |
+| `POST` | `/api/projects/<id>/post` | publish/schedule (`{platforms[], when, caption}`) |
+| `GET` | `/api/posts` | post history + stats |
 
 ---
 

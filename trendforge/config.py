@@ -60,6 +60,11 @@ class Settings:
     tts_provider: str = field(default_factory=lambda: _env("TTS_PROVIDER", "auto"))
     elevenlabs_api_key: str = field(default_factory=lambda: _env("ELEVENLABS_API_KEY"))
 
+    # ── Auto-posting / distribution ──────────────────────────────────────
+    autopost_provider: str = field(default_factory=lambda: _env("AUTOPOST_PROVIDER", "auto"))
+    ayrshare_api_key: str = field(default_factory=lambda: _env("AYRSHARE_API_KEY"))
+    blotato_api_key: str = field(default_factory=lambda: _env("BLOTATO_API_KEY"))
+
     # ── Misc ─────────────────────────────────────────────────────────────
     request_timeout: int = field(default_factory=lambda: int(_env("TF_HTTP_TIMEOUT", "20") or 20))
 
@@ -73,6 +78,8 @@ class Settings:
             ),
             "music": "suno" if self.suno_api_key else "mock",
             "voice": "elevenlabs" if self.elevenlabs_api_key else "mock",
+            "autopost": "ayrshare" if self.ayrshare_api_key else (
+                "blotato" if self.blotato_api_key else "mock"),
         }
 
 
