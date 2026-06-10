@@ -24,6 +24,7 @@ an explainable **trend score**.
 | 📰 **Article → Video** | any article/news/info URL | an explainer video built from the page's content |
 | 🎵 **Music Video / Song** | a topic | a structured song (genre, BPM, key, lyrics) + synced music‑video storyboard |
 | 🎓 **Educational** | a topic | a structured lesson / instructional video with an outline |
+| 🧠 **Brainrot Feed** | (optional topic) | an endless TikTok-style vertical scroll of auto-generated brainrot clips (split-screen look, meme sounds, bouncing captions) — each a real, postable project |
 | 📊 **Trend Score** | any hook/caption/length | an explainable 0–100 virality score with concrete fixes |
 | 🚀 **Auto-post** | a saved project + platforms | publishes or schedules to TikTok/Reels/Shorts/YouTube/X/etc. with post history |
 | 🖼️ **My Videos** | — | a saved gallery of every project (SQLite), re‑openable & remixable |
@@ -105,6 +106,8 @@ trendforge/
 | `POST` | `/api/from-article` | article URL → video (`{url, ...}`) |
 | `POST` | `/api/music-video` | song / music video (`{topic, genre, ...}`) |
 | `POST` | `/api/educational` | lesson video (`{topic, level, ...}`) |
+| `POST` | `/api/brainrot` | one brainrot clip (`{topic?}`) |
+| `GET` | `/api/brainrot/feed?n=&topic=` | a batch of brainrot clips for the feed |
 | `POST` | `/api/score` | score any content for virality |
 | `GET/DELETE` | `/api/projects[/<id>]` | gallery CRUD |
 | `POST` | `/api/projects/<id>/post` | publish/schedule (`{platforms[], when, caption}`) |

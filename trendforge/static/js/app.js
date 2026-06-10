@@ -24,6 +24,7 @@ async function boot() {
   loadTrends();
   wireTabs();
   wireStudio();
+  wireBrainrot();
   wirePostModal();
   $('#f-length').addEventListener('input', e => $('#len-val').textContent = e.target.value);
 }
@@ -58,6 +59,7 @@ function wireTabs() {
     $('#tab-' + t.dataset.tab).classList.add('active');
     if (t.dataset.tab === 'forecast') loadForecast();
     if (t.dataset.tab === 'gallery') loadGallery();
+    if (t.dataset.tab === 'brainrot' && !$('#brainrot-feed').children.length) loadBrainrot(true);
   }));
   $('#trend-refresh').addEventListener('click', loadTrends);
   $('#trend-category').addEventListener('change', loadTrends);
@@ -334,6 +336,71 @@ function galleryCard(p) {
     </div>
   </div>`;
 }
+
+/* ── brainrot feed ────────────────────────────────────── */
+let brainrotLoading = false;
+
+function wireBrainrot() {
+  $('#brainrot-go').addEventListener('click', () => loadBrainrot(true));
+  const feed = $('#brainrot-feed');
+  feed.addEventListener('scroll', () => {
+    if (feed.scrollTop + feed.clientHeight >= feed.scrollHeight - 600) loadBrainrot(false);
+  });
+}
+
+async function loadBrainrot(reset) {
+  if (brainrotLoading) return;
+  brainrotLoading = true;
+  const feed = $('#brainrot-feed');
+  const topic = $('#brainrot-topic').value.trim();
+  if (reset) feed.innerHTML = '';
+  $('#feed-loader').style.display = 'flex';
+  try {
+    const d = await api(`/brainrot/feed?n=5${topic ? '&topic=' + encodeURIComponent(topic) : ''}`);
+    feed.insertAdjacentHTML('beforeend', d.feed.map(reelCard).join(''));
+    wireReels();
+    if (reset && feed.firstElementChild) feed.scrollTo({ top: 0 });
+  } catch (e) { toast('feed error'); }
+  finally { $('#feed-loader').style.display = 'none'; brainrotLoading = false; }
+}
+
+function reelCard(p) {
+  const sp = p.spec || {};
+  const br = sp.brainrot || {};
+  const poster = sp.poster_url;
+  const tags = (br.hashtags || []).join(' ');
+  return `<div class="reel" data-id="${p.id}">
+    ${poster ? `<img src="${poster}" alt=""/>` : ''}
+    <div class="score-tag">🔥 ${(sp.trend || {}).trend_score ?? p.trend_score} · ${(sp.trend || {}).grade || ''}</div>
+    <div class="rail">
+      <button class="like" title="like">🤍</button><span class="lbl likes">${kfmt(br.likes)}</span>
+      <button title="comments">💬</button><span class="lbl">${kfmt(br.comments)}</span>
+      <button title="share">🔁</button><span class="lbl">${kfmt(br.shares)}</span>
+      <button class="postbtn" title="post / schedule">🚀</button><span class="lbl">post</span>
+    </div>
+    <div class="bottom">
+      <div class="handle">@trendforge.ai</div>
+      <div class="rcap">${esc(br.caption || p.title)}</div>
+      <div class="rtags">${esc(tags)}</div>
+      <div class="sound"><span class="eq"><i></i><i></i><i></i></span> 🔊 ${esc(br.sound || 'original sound')}</div>
+    </div>
+  </div>`;
+}
+
+function wireReels() {
+  $$('#brainrot-feed .reel').forEach(reel => {
+    if (reel.dataset.wired) return; reel.dataset.wired = '1';
+    const like = reel.querySelector('.like');
+    like.addEventListener('click', () => {
+      const on = like.textContent === '🤍';
+      like.textContent = on ? '❤️' : '🤍';
+      like.classList.toggle('liked', on);
+    });
+    reel.querySelector('.postbtn').addEventListener('click', () => openPost(reel.dataset.id));
+  });
+}
+
+const kfmt = (n) => { n = n || 0; return n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : '' + n; };
 
 /* ── post / schedule modal ────────────────────────────── */
 let POST_PID = null;

@@ -141,6 +141,22 @@ def educational():
     ))
 
 
+@api.post("/brainrot")
+def brainrot():
+    b = _body()
+    return jsonify(_studio.brainrot(
+        topic=b.get("topic", ""), aspect=b.get("aspect", "9:16"),
+        target_sec=int(b.get("target_sec", 18)), platform=b.get("platform", "TikTok"),
+    ))
+
+
+@api.get("/brainrot/feed")
+def brainrot_feed():
+    n = int(request.args.get("n", 5))
+    topic = request.args.get("topic", "")
+    return jsonify({"feed": _studio.brainrot_feed(n=n, topic=topic)})
+
+
 @api.post("/score")
 def score():
     b = _body()

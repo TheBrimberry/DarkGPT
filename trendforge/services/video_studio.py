@@ -17,6 +17,7 @@ import os
 
 from ..config import settings
 from ..providers import VideoProvider, MusicProvider, VoiceProvider, ScraperProvider, LLMProvider
+from ..providers.base import seeded_rng
 from .storyboard import Storyboard
 from .scoring import score_content
 from .project_store import ProjectStore
@@ -126,9 +127,37 @@ class VideoStudio:
         spec["spec"]["lesson_outline"] = outline
         return spec
 
+    # ── 6. brainrot ──────────────────────────────────────────────────────
+    def brainrot(self, *, topic: str = "", aspect: str = "9:16", target_sec: int = 18,
+                 platform: str = "TikTok", seed: str = "") -> dict:
+        from . import brainrot as br
+        rng = seeded_rng("brainrot", topic, seed)
+        topic = (topic or "").strip() or br.pick_topic(rng)
+        meta = br.feed_meta(topic, rng)
+        brief = br.brainrot_brief(topic, rng)
+        board = self.story.build(brief=brief, tone="chaotic", target_sec=target_sec, aspect=aspect)
+        # force the giant caption + brainrot package
+        if board.get("scenes"):
+            board["scenes"][0]["on_screen_text"] = topic.upper()
+        board["package"] = {
+            "caption": meta["caption"], "hashtags": meta["hashtags"],
+            "hooks": [meta["caption"]], "best_post_time": "9:00 PM",
+            "thumbnail_text": topic.title(),
+        }
+        spec = self._assemble(kind="brainrot", title=_title(topic), prompt=topic,
+                              board=board, aspect=aspect, style="brainrot", voice="gen_z",
+                              platform=platform, want_music=True,
+                              topic_heat=92, override_score=br.brainrot_score(topic, meta, target_sec))
+        spec["spec"]["brainrot"] = meta
+        return spec
+
+    def brainrot_feed(self, *, n: int = 5, topic: str = "") -> list[dict]:
+        return [self.brainrot(topic=topic, seed=f"{topic}-{i}") for i in range(max(1, min(n, 12)))]
+
     # ── shared assembly ──────────────────────────────────────────────────
     def _assemble(self, *, kind, title, board, aspect, style, voice, platform,
-                  want_music, topic_heat, prompt="", source_url="", attach_music=None) -> dict:
+                  want_music, topic_heat, prompt="", source_url="", attach_music=None,
+                  override_score=None) -> dict:
         scenes = board["scenes"]
         render = self.video.render(scenes=scenes, aspect=aspect, style=style,
                                    job_id=_jid(title), out_dir=POSTER_DIR)
@@ -144,9 +173,10 @@ class VideoStudio:
         hook = board.get("hook", "")
         hashtags = pkg.get("hashtags", []) if isinstance(pkg, dict) else []
         caption = pkg.get("caption", "") if isinstance(pkg, dict) else ""
-        score = score_content(hook=hook, caption=caption, hashtags=hashtags,
-                              duration_sec=board["target_sec"], aspect=aspect,
-                              platform=platform, topic_heat=topic_heat)
+        score = override_score or score_content(
+            hook=hook, caption=caption, hashtags=hashtags,
+            duration_sec=board["target_sec"], aspect=aspect,
+            platform=platform, topic_heat=topic_heat)
 
         spec = {
             "kind": kind,

@@ -26,6 +26,7 @@
     <button class="tab active" data-tab="trends">🔥 Trends</button>
     <button class="tab" data-tab="forecast">🔮 Forecast</button>
     <button class="tab" data-tab="studio">🎬 Video Studio</button>
+    <button class="tab brainrot-tab" data-tab="brainrot">🧠 Brainrot</button>
     <button class="tab" data-tab="gallery">🖼️ My Videos</button>
   </nav>
 
@@ -144,6 +145,22 @@
           </div>
         </div>
       </div>
+    </section>
+
+    <!-- ── BRAINROT FEED ──────────────────────────────────────── -->
+    <section class="panel" id="tab-brainrot">
+      <div class="brainrot-head">
+        <div>
+          <h2>🧠 Brainrot Feed <span class="live-dot"></span></h2>
+          <p class="hint">Endless auto-generated brainrot. Scroll forever. Tap 🚀 to post any clip.</p>
+        </div>
+        <div class="controls">
+          <input type="text" id="brainrot-topic" placeholder="optional topic… (e.g. skibidi, rizz, Ohio)" style="max-width:260px" />
+          <button class="btn primary" id="brainrot-go">⚡ Generate feed</button>
+        </div>
+      </div>
+      <div class="feed" id="brainrot-feed"></div>
+      <div class="feed-loader" id="feed-loader" style="display:none"><div class="spinner"></div> brewing more brainrot…</div>
     </section>
 
     <!-- ── GALLERY ────────────────────────────────────────────── -->

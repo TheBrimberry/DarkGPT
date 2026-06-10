@@ -96,14 +96,24 @@ _PALETTES = {
     "clean": ["#e0eafc", "#cfdef3", "#a1c4fd"],
     "neon": ["#000000", "#7928ca", "#ff0080"],
     "documentary": ["#232526", "#414345", "#1c1c1c"],
+    "brainrot": ["#1a0033", "#ff00d4", "#00ff88"],
 }
 
 
 def _write_poster(path: str, scenes: list[dict], style: str, w: int, h: int, rng) -> None:
-    pal = _PALETTES.get(style, _PALETTES["cinematic"])
     title = (scenes[0].get("on_screen_text") if scenes else "") or "TRENDFORGE"
     vw, vh = 1080, int(1080 * h / w)
-    svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {vw} {vh}" width="{vw}" height="{vh}">
+    if style == "brainrot":
+        svg = _brainrot_svg(title, vw, vh, rng)
+    else:
+        svg = _standard_svg(title, style, len(scenes), vw, vh, rng)
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write(svg)
+
+
+def _standard_svg(title: str, style: str, n_scenes: int, vw: int, vh: int, rng) -> str:
+    pal = _PALETTES.get(style, _PALETTES["cinematic"])
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {vw} {vh}" width="{vw}" height="{vh}">
   <defs>
     <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="{pal[0]}"/>
@@ -117,12 +127,66 @@ def _write_poster(path: str, scenes: list[dict], style: str, w: int, h: int, rng
   <text x="50%" y="46%" fill="#ffffff" font-family="Arial Black, Arial, sans-serif"
         font-size="78" font-weight="900" text-anchor="middle">{_esc(title[:22])}</text>
   <text x="50%" y="54%" fill="#ffffff" opacity="0.85" font-family="Arial" font-size="34"
-        text-anchor="middle">{_esc(style.title())} • {len(scenes)} scenes</text>
+        text-anchor="middle">{_esc(style.title())} • {n_scenes} scenes</text>
   <text x="50%" y="95%" fill="#ffffff" opacity="0.7" font-family="Arial" font-size="26"
         text-anchor="middle">TrendForge preview</text>
 </svg>'''
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write(svg)
+
+
+def _brainrot_svg(title: str, vw: int, vh: int, rng) -> str:
+    """The classic brainrot split-screen look: chaotic top half + 'gameplay'
+    bottom half, with a giant impact caption and scattered emojis."""
+    mid = vh // 2
+    emojis = "".join(
+        f'<text x="{rng.randint(60, vw-60)}" y="{rng.randint(120, vh-120)}" '
+        f'font-size="{rng.randint(48, 110)}" opacity="0.85">{e}</text>'
+        for e in rng.sample(["💀", "🔥", "😭", "🤯", "🗿", "💯", "🧠", "👹", "⁉️", "✨"], 6)
+    )
+    # word-wrap the caption into up to 3 punchy lines
+    words = (title or "BRAINROT").upper().split()
+    lines, cur = [], ""
+    for wd in words:
+        if len(cur + " " + wd) > 14 and cur:
+            lines.append(cur); cur = wd
+        else:
+            cur = (cur + " " + wd).strip()
+    if cur:
+        lines.append(cur)
+    lines = lines[:3] or ["BRAINROT"]
+    fs = 96 if max(len(l) for l in lines) <= 10 else 74
+    y0 = mid - (len(lines) - 1) * fs / 2
+    caption = "".join(
+        f'<text x="50%" y="{y0 + i*fs}" fill="#ffffff" stroke="#000000" stroke-width="9" '
+        f'paint-order="stroke" font-family="Arial Black, Impact, sans-serif" font-size="{fs}" '
+        f'font-weight="900" text-anchor="middle">{_esc(l)}</text>'
+        for i, l in enumerate(lines)
+    )
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {vw} {vh}" width="{vw}" height="{vh}">
+  <defs>
+    <linearGradient id="top" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a0033"/><stop offset="50%" stop-color="#ff00d4"/>
+      <stop offset="100%" stop-color="#7928ca"/>
+    </linearGradient>
+    <linearGradient id="bot" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00ff88"/><stop offset="50%" stop-color="#0066ff"/>
+      <stop offset="100%" stop-color="#00ffcc"/>
+    </linearGradient>
+  </defs>
+  <rect width="{vw}" height="{mid}" fill="url(#top)"/>
+  <rect y="{mid}" width="{vw}" height="{vh-mid}" fill="url(#bot)"/>
+  <!-- fake 'gameplay' lanes in the bottom half -->
+  <g opacity="0.25">
+    <rect x="{vw*0.25}" y="{mid}" width="6" height="{vh-mid}" fill="#fff"/>
+    <rect x="{vw*0.5}" y="{mid}" width="6" height="{vh-mid}" fill="#fff"/>
+    <rect x="{vw*0.75}" y="{mid}" width="6" height="{vh-mid}" fill="#fff"/>
+  </g>
+  <rect x="{vw*0.42}" y="{mid+120}" width="{vw*0.16}" height="{vw*0.16}" rx="20" fill="#ffeb3b" opacity="0.9"/>
+  {emojis}
+  {caption}
+  <text x="50%" y="{vh-70}" fill="#000" stroke="#fff" stroke-width="5" paint-order="stroke"
+        font-family="Arial Black, sans-serif" font-size="34" font-weight="900"
+        text-anchor="middle">🔊 original sound - trendforge</text>
+</svg>'''
 
 
 def _esc(s: str) -> str:
