@@ -26,6 +26,16 @@ def _flag(name: str, default: bool = False) -> bool:
     return val in {"1", "true", "yes", "on"}
 
 
+def _default_data_dir() -> str:
+    # On serverless hosts (e.g. Vercel) the bundle is read-only except /tmp.
+    explicit = _env("TF_DATA_DIR")
+    if explicit:
+        return explicit
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        return "/tmp/trendforge"
+    return os.path.join(os.path.dirname(__file__), "data")
+
+
 @dataclass
 class Settings:
     # ── Server ────────────────────────────────────────────────────────────
@@ -33,7 +43,7 @@ class Settings:
     port: int = field(default_factory=lambda: int(_env("TF_PORT", "5050") or 5050))
     debug: bool = field(default_factory=lambda: _flag("TF_DEBUG", True))
     secret_key: str = field(default_factory=lambda: _env("TF_SECRET_KEY", "trendforge-dev-secret"))
-    data_dir: str = field(default_factory=lambda: _env("TF_DATA_DIR", os.path.join(os.path.dirname(__file__), "data")))
+    data_dir: str = field(default_factory=_default_data_dir)
 
     # ── LLM (text / scripts / analysis) ──────────────────────────────────
     llm_provider: str = field(default_factory=lambda: _env("LLM_PROVIDER", "auto"))

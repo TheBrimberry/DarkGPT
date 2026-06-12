@@ -189,7 +189,7 @@ class VideoStudio:
             "music": music,
             "publish": pkg,
             "trend": score,
-            "poster_url": f"/renders/{render.get('poster')}" if render.get("poster") else None,
+            "poster_url": render.get("poster"),
             "mock_notice": any([
                 render.get("_mock"), (voiceover or {}).get("_mock"),
                 (music or {}).get("_mock"),

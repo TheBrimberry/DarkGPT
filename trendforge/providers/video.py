@@ -6,6 +6,7 @@ UI can show a real, viewable preview artifact for every job.
 """
 from __future__ import annotations
 
+import base64
 import os
 from typing import Any
 
@@ -70,12 +71,10 @@ class VideoProvider:
         rng = seeded_rng(job_id, aspect, style, len(scenes))
         w, h = ASPECTS.get(aspect, ASPECTS["9:16"])
         duration = sum(int(s.get("duration_sec", 4)) for s in scenes) or 18
-        poster_rel = None
-        if out_dir:
-            os.makedirs(out_dir, exist_ok=True)
-            poster_path = os.path.join(out_dir, f"{job_id}.svg")
-            _write_poster(poster_path, scenes, style, w, h, rng)
-            poster_rel = os.path.basename(poster_path)
+        # Self-contained data-URI poster: renders anywhere (incl. read-only /
+        # ephemeral serverless filesystems) with no file to serve.
+        svg = _build_svg(scenes, style, w, h, rng)
+        poster = "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode("ascii")
         return {
             "status": "preview_ready",
             "render_id": f"mock_{job_id}",
@@ -84,7 +83,7 @@ class VideoProvider:
             "style": style,
             "duration_sec": duration,
             "scene_count": len(scenes),
-            "poster": poster_rel,
+            "poster": poster,
             "note": "Mock render: storyboard + poster generated. Add a VIDEO_PROVIDER key for full MP4 output.",
             "source": "mock",
         }
@@ -100,15 +99,12 @@ _PALETTES = {
 }
 
 
-def _write_poster(path: str, scenes: list[dict], style: str, w: int, h: int, rng) -> None:
+def _build_svg(scenes: list[dict], style: str, w: int, h: int, rng) -> str:
     title = (scenes[0].get("on_screen_text") if scenes else "") or "TRENDFORGE"
     vw, vh = 1080, int(1080 * h / w)
     if style == "brainrot":
-        svg = _brainrot_svg(title, vw, vh, rng)
-    else:
-        svg = _standard_svg(title, style, len(scenes), vw, vh, rng)
-    with open(path, "w", encoding="utf-8") as fh:
-        fh.write(svg)
+        return _brainrot_svg(title, vw, vh, rng)
+    return _standard_svg(title, style, len(scenes), vw, vh, rng)
 
 
 def _standard_svg(title: str, style: str, n_scenes: int, vw: int, vh: int, rng) -> str:
