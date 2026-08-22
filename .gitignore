@@ -43,3 +43,5 @@ settings.json
 # TrendForge runtime data (generated DB + render artifacts)
 trendforge/data/trendforge.db
 trendforge/data/renders/
+.vercel
+.env*
