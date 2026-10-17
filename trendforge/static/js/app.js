@@ -227,9 +227,10 @@ function renderProject(project, mount) {
         <h3 style="margin:10px 0 4px">${esc(project.title)}</h3>
         ${pkg.caption ? `<p class="hint">${esc(pkg.caption)}</p>` : ''}
         <div class="card-actions">
-          <button class="btn primary" onclick="openPost('${project.id}')">🚀 Post / Schedule</button>
+          <button class="btn primary" onclick="TFPlayer.openById('${project.id}')">▶ Watch video</button>
+          <button class="btn ghost" onclick="openPost('${project.id}')">🚀 Post</button>
           <button class="btn ghost" onclick="regenerate('${esc(project.prompt || project.title)}')">🔄 Remix</button>
-          <button class="btn ghost" onclick="copyScript(this)" data-script="${esc(board.script || '')}">📋 Copy script</button>
+          <button class="btn ghost" onclick="copyScript(this)" data-script="${esc(board.script || '')}">📋 Script</button>
         </div>
       </div>
     </div>
@@ -330,7 +331,8 @@ function galleryCard(p) {
     <div class="topic">${esc(p.title)}</div>
     <div class="meta"><span class="tagchip">${esc(p.kind)}</span><span class="badge first">${p.trend_score}</span></div>
     <div class="card-actions">
-      <button class="btn primary open" data-id="${p.id}">Open</button>
+      <button class="btn primary" onclick="TFPlayer.openById('${p.id}')" title="Watch">▶</button>
+      <button class="btn ghost open" data-id="${p.id}">Open</button>
       <button class="btn ghost post" data-id="${p.id}" title="Post / Schedule">🚀</button>
       <button class="btn ghost del" data-id="${p.id}">🗑️</button>
     </div>
@@ -370,7 +372,8 @@ function reelCard(p) {
   const poster = sp.poster_url;
   const tags = (br.hashtags || []).join(' ');
   return `<div class="reel" data-id="${p.id}">
-    ${poster ? `<img src="${poster}" alt=""/>` : ''}
+    ${poster ? `<img src="${poster}" alt="" onclick="TFPlayer.openById('${p.id}')" style="cursor:pointer"/>` : ''}
+    <button class="reel-play" onclick="TFPlayer.openById('${p.id}')" title="Play">▶</button>
     <div class="score-tag">🔥 ${(sp.trend || {}).trend_score ?? p.trend_score} · ${(sp.trend || {}).grade || ''}</div>
     <div class="rail">
       <button class="like" title="like">🤍</button><span class="lbl likes">${kfmt(br.likes)}</span>
