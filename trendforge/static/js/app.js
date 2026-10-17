@@ -30,6 +30,7 @@ async function boot() {
 }
 
 function renderPills() {
+  window.TF_RENDER_URL = STATUS.render_worker_url || '';
   const p = STATUS.providers;
   $('#provider-pills').innerHTML = Object.entries(p).map(([k, v]) => {
     const mock = v === 'mock';

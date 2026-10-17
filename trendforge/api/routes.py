@@ -39,6 +39,7 @@ def status():
         "aspects": list(ASPECTS.keys()),
         "voices": _voice.voices(),
         "platforms": _publisher.platforms(),
+        "render_worker_url": settings.render_worker_url,
         "stats": _store.stats(),
         "post_stats": _store.post_stats(),
     })

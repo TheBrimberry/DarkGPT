@@ -77,6 +77,7 @@ class Settings:
 
     # ── Misc ─────────────────────────────────────────────────────────────
     request_timeout: int = field(default_factory=lambda: int(_env("TF_HTTP_TIMEOUT", "20") or 20))
+    render_worker_url: str = field(default_factory=lambda: _env("RENDER_WORKER_URL"))
 
     def provider_status(self) -> dict:
         """A human-readable map of which capabilities are live vs mocked."""

@@ -14,7 +14,7 @@ const TFPlayer = (function () {
   };
   const EMOJIS = ['💀', '🔥', '😭', '🤯', '🗿', '💯', '🧠', '👹', '⁉️', '✨'];
 
-  let el = {}, canvas, ctx, W, H, scenes, style, isBR, title, brMeta;
+  let el = {}, canvas, ctx, W, H, scenes, style, isBR, title, brMeta, proj;
   let raf = 0, t0 = 0, pausedAt = 0, total = 0, playing = false, recording = false;
   let rec, chunks, audio = null, rain = [];
 
@@ -36,6 +36,7 @@ const TFPlayer = (function () {
           <span class="tfp-time" id="tfp-time">0:00</span>
           <span style="flex:1"></span>
           <button class="btn primary" id="tfp-dl">⬇ Download video</button>
+          <button class="btn" id="tfp-mp4" title="Render a real MP4 (stock footage + voice) on the render worker">🎞️ MP4</button>
         </div>
         <div class="tfp-note" id="tfp-note"></div>
       </div>`;
@@ -45,6 +46,7 @@ const TFPlayer = (function () {
       big: wrap.querySelector('#tfp-big'), fill: wrap.querySelector('#tfp-fill'),
       play: wrap.querySelector('#tfp-play'), mute: wrap.querySelector('#tfp-mute'),
       time: wrap.querySelector('#tfp-time'), dl: wrap.querySelector('#tfp-dl'), note: wrap.querySelector('#tfp-note'),
+      mp4: wrap.querySelector('#tfp-mp4'),
     };
     canvas = el.canvas; ctx = canvas.getContext('2d');
     wrap.addEventListener('click', e => { if (e.target === wrap) close(); });
@@ -53,6 +55,7 @@ const TFPlayer = (function () {
     el.big.addEventListener('click', toggle);
     el.mute.addEventListener('click', () => { muted = !muted; el.mute.textContent = muted ? '🔇' : '🔊'; if (audio) audio.master.gain.value = muted ? 0 : gainFor(); });
     el.dl.addEventListener('click', download);
+    el.mp4.addEventListener('click', renderMP4);
   }
 
   let muted = false;
@@ -65,6 +68,7 @@ const TFPlayer = (function () {
   }
   function open(project) {
     build();
+    proj = project;
     const sp = project.spec || {};
     style = sp.style || 'vibrant';
     isBR = project.kind === 'brainrot' || style === 'brainrot';
@@ -87,6 +91,7 @@ const TFPlayer = (function () {
     }));
     el.title.textContent = (isBR ? '🧠 ' : '🎬 ') + (project.title || 'Preview');
     el.note.textContent = 'Real animated video, rendered in your browser. Hit Download to save it as a .webm you can watch & upload.';
+    el.mp4.style.display = (window.TF_RENDER_URL ? '' : 'none');
     el.wrap.classList.add('show');
     seek(0); drawAt(0); setBig(true);
   }
@@ -274,6 +279,33 @@ const TFPlayer = (function () {
   function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
   function easeOutBack(x) { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
   function fmt(s) { s = Math.max(0, Math.floor(s)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+
+  // ── real MP4 via the render worker ───────────────────────────────────────
+  async function renderMP4() {
+    const base = (window.TF_RENDER_URL || '').replace(/\/+$/, '');
+    if (!base) { el.note.textContent = '⚠️ Real-MP4 export needs the render worker. Deploy tf-render and set RENDER_WORKER_URL on Vercel.'; return; }
+    const sp = (proj || {}).spec || {};
+    const src = (sp.storyboard || {}).scenes || [];
+    const wscenes = src.map(s => ({
+      headline: s.on_screen_text || s.title || '',
+      narration: s.narration || s.on_screen_text || '',
+      keyword: (proj.title || s.title || '').toString(),
+    }));
+    const body = { aspect: sp.aspect || '9:16', style: sp.style || 'vibrant', title: proj.title, scenes: wscenes, scale: 0.6 };
+    el.mp4.disabled = true; el.note.textContent = '⏳ Sending job to the render worker…';
+    try {
+      const r = await fetch(base + '/render', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(x => x.json());
+      const id = r.job_id; if (!id) throw new Error(r.error || 'no job id');
+      for (let k = 0; k < 150; k++) {
+        await new Promise(z => setTimeout(z, 2000));
+        const j = await fetch(base + '/jobs/' + id).then(x => x.json());
+        el.note.textContent = `⏳ ${j.message || 'rendering'}… ${j.progress || 0}%`;
+        if (j.status === 'done') { const u = base + j.video_url; el.note.innerHTML = `✅ Real MP4 ready — <a href="${u}" target="_blank" style="color:var(--accent);font-weight:700">open / download ↗</a>`; break; }
+        if (j.status === 'error') { el.note.textContent = '⚠️ Render failed: ' + (j.message || ''); break; }
+      }
+    } catch (e) { el.note.textContent = '⚠️ ' + e.message; }
+    finally { el.mp4.disabled = false; }
+  }
 
   return { open, openById };
 })();
