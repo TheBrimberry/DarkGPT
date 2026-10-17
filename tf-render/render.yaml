@@ -1,0 +1,17 @@
+# Render.com blueprint — deploy the TrendForge render worker in one click.
+# In the Render dashboard: New +  ->  Blueprint  ->  point it at this repo.
+services:
+  - type: web
+    name: tf-render
+    runtime: docker
+    rootDir: tf-render
+    dockerfilePath: ./Dockerfile
+    plan: starter            # needs more RAM/CPU than free for FFmpeg; starter is cheap
+    healthCheckPath: /healthz
+    envVars:
+      - key: PEXELS_API_KEY  # optional: real stock b-roll (free key at pexels.com/api)
+        sync: false
+      - key: TTS_VOICE
+        value: en-US-AriaNeural
+      - key: MAX_SCENES
+        value: "8"

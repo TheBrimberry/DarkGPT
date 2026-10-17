@@ -45,3 +45,6 @@ trendforge/data/trendforge.db
 trendforge/data/renders/
 .vercel
 .env*
+
+# Render worker output
+tf-render/renders/
